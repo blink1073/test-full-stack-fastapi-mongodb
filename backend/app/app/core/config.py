@@ -13,8 +13,8 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_EXPIRE_SECONDS: int = 60 * 60 * 24 * 30
     JWT_ALGO: str = "HS512"
     TOTP_ALGO: str = "SHA-1"
-    SERVER_NAME: str
-    SERVER_HOST: AnyHttpUrl
+    SERVER_NAME: str = "test"
+    SERVER_HOST: AnyHttpUrl = "http://locahost"
     SERVER_BOT: str = "Symona"
     # BACKEND_CORS_ORIGINS is a JSON-formatted list of origins
     # e.g: '["http://localhost", "http://localhost:4200", "http://localhost:3000", \
@@ -29,8 +29,8 @@ class Settings(BaseSettings):
             return v
         raise ValueError(v)
 
-    PROJECT_NAME: str
-    SENTRY_DSN: Optional[HttpUrl] = None
+    PROJECT_NAME: str = "test"
+    SENTRY_DSN: Optional[HttpUrl] = ""
 
     @validator("SENTRY_DSN", pre=True)
     def sentry_dsn_can_be_blank(cls, v: str) -> Optional[str]:
@@ -38,11 +38,11 @@ class Settings(BaseSettings):
             return None
         return v
 
-    POSTGRES_SERVER: str
-    POSTGRES_USER: str
-    POSTGRES_PASSWORD: str
-    POSTGRES_DB: str
-    SQLALCHEMY_DATABASE_URI: Optional[PostgresDsn] = None
+    POSTGRES_SERVER: str ="locahost:5432"
+    POSTGRES_USER: str = "test"
+    POSTGRES_PASSWORD: str = "password"
+    POSTGRES_DB: str = "test"
+    SQLALCHEMY_DATABASE_URI: Optional[PostgresDsn] = "postgresql://test@localhost/test"
 
     @validator("SQLALCHEMY_DATABASE_URI", pre=True)
     def assemble_db_connection(cls, v: Optional[str], values: Dict[str, Any]) -> Any:
@@ -84,8 +84,8 @@ class Settings(BaseSettings):
         )
 
     EMAIL_TEST_USER: EmailStr = "test@example.com"  # type: ignore
-    FIRST_SUPERUSER: EmailStr
-    FIRST_SUPERUSER_PASSWORD: str
+    FIRST_SUPERUSER: EmailStr = "test@example.com"
+    FIRST_SUPERUSER_PASSWORD: str = "testpass"
     USERS_OPEN_REGISTRATION: bool = True
 
     # NEO4J
@@ -93,10 +93,10 @@ class Settings(BaseSettings):
     NEO4J_AUTO_INSTALL_LABELS: Optional[bool] = True
     NEO4J_MAX_CONNECTION_POOL_SIZE: Optional[int] = 50
     NEO4J_SERVER: Optional[str] = "localhost"
-    NEO4J_USERNAME: str
-    NEO4J_PASSWORD: str
-    NEO4J_AUTH: str
-    NEO4J_BOLT: str
+    NEO4J_USERNAME: str = ""
+    NEO4J_PASSWORD: str = ""
+    NEO4J_AUTH: str = ""
+    NEO4J_BOLT: str = ""
     NEO4J_BOLT_URL: Optional[str] = None
     NEO4J_SUGGESTION_LIMIT: int = 8
     NEO4J_RESULTS_LIMIT: int = 100

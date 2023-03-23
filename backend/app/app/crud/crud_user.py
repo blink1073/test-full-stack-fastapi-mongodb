@@ -1,6 +1,6 @@
 from typing import Any, Dict, Optional, Union
 
-from sqlalchemy.orm import Session
+from pymongo.database import Database
 
 from app.core.security import get_password_hash, verify_password, create_new_totp
 from app.crud.base import CRUDBase
@@ -10,10 +10,10 @@ from app.schemas.totp import NewTOTP
 
 
 class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
-    def get_by_email(self, db: Session, *, email: str) -> Optional[User]:
-        return db.query(User).filter(User.email == email).first()
+    def get_by_email(self, db: Database, *, email: str) -> Optional[User]:
+        return db.users.find_one({'email': email})
 
-    def create(self, db: Session, *, obj_in: UserCreate) -> User:
+    def create(self, db: Database, *, obj_in: UserCreate) -> User:
         db_obj = User(
             email=obj_in.email,
             full_name=obj_in.full_name,
@@ -21,12 +21,11 @@ class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
         )
         if obj_in.password:
             db_obj.hashed_password = get_password_hash(obj_in.password)
-        db.add(db_obj)
-        db.commit()
-        db.refresh(db_obj)
+        db.users.insert_one(db_obj.dict())
         return db_obj
 
-    def update(self, db: Session, *, db_obj: User, obj_in: Union[UserUpdate, Dict[str, Any]]) -> User:
+    def update(self, db: Database, *, db_obj: User, obj_in: Union[UserUpdate, Dict[str, Any]]) -> User:
+        import pdb; pdb.set_trace()
         if isinstance(obj_in, dict):
             update_data = obj_in
         else:
@@ -39,7 +38,8 @@ class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
             update_data["email_validated"] = False
         return super().update(db, db_obj=db_obj, obj_in=update_data)
 
-    def authenticate(self, db: Session, *, email: str, password: str) -> Optional[User]:
+    def authenticate(self, db: Database, *, email: str, password: str) -> Optional[User]:
+        import pdb; pdb.set_trace()
         user = self.get_by_email(db, email=email)
         if not user:
             return None
@@ -47,31 +47,31 @@ class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
             return None
         return user
 
-    def validate_email(self, db: Session, *, db_obj: User) -> User:
+    def validate_email(self, db: Database, *, db_obj: User) -> User:
         obj_in = UserUpdate(**UserInDB.from_orm(db_obj).dict())
         obj_in.email_validated = True
         return self.update(db=db, db_obj=db_obj, obj_in=obj_in)
 
-    def activate_totp(self, db: Session, *, db_obj: User, totp_in: NewTOTP) -> User:
+    def activate_totp(self, db: Database, *, db_obj: User, totp_in: NewTOTP) -> User:
         obj_in = UserUpdate(**UserInDB.from_orm(db_obj).dict())
         obj_in = obj_in.dict(exclude_unset=True)
         obj_in["totp_secret"] = totp_in.secret
         return self.update(db=db, db_obj=db_obj, obj_in=obj_in)
 
-    def deactivate_totp(self, db: Session, *, db_obj: User) -> User:
+    def deactivate_totp(self, db: Database, *, db_obj: User) -> User:
         obj_in = UserUpdate(**UserInDB.from_orm(db_obj).dict())
         obj_in = obj_in.dict(exclude_unset=True)
         obj_in["totp_secret"] = None
         obj_in["totp_counter"] = None
         return self.update(db=db, db_obj=db_obj, obj_in=obj_in)
 
-    def update_totp_counter(self, db: Session, *, db_obj: User, new_counter: int) -> User:
+    def update_totp_counter(self, db: Database, *, db_obj: User, new_counter: int) -> User:
         obj_in = UserUpdate(**UserInDB.from_orm(db_obj).dict())
         obj_in = obj_in.dict(exclude_unset=True)
         obj_in["totp_counter"] = new_counter
         return self.update(db=db, db_obj=db_obj, obj_in=obj_in)
 
-    def toggle_user_state(self, db: Session, *, obj_in: Union[UserUpdate, Dict[str, Any]]) -> User:
+    def toggle_user_state(self, db: Database, *, obj_in: Union[UserUpdate, Dict[str, Any]]) -> User:
         db_obj = self.get_by_email(db, email=obj_in.email)
         if not db_obj:
             return None

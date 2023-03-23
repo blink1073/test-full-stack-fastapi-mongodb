@@ -33,7 +33,8 @@ def get_token_payload(token: str) -> schemas.TokenPayload:
     return token_data
 
 
-def get_current_user(db: Session = Depends(get_db), token: str = Depends(reusable_oauth2)) -> models.User:
+def get_current_user(db: Session = Depends(get_db), token: str = '') -> models.User:
+    import pdb; pdb.set_trace()
     token_data = get_token_payload(token)
     if token_data.refresh or token_data.totp:
         # Refresh token is not a valid access token and TOTP True can only be used to validate TOTP
