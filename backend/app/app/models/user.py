@@ -2,11 +2,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Optional, List
 from datetime import datetime
 from pydantic import Field
-# from sqlalchemy.orm import Mapped, mapped_column, relationship
-# from sqlalchemy import DateTime
-# from sqlalchemy.sql import func
-# from sqlalchemy.orm import relationship
-# from sqlalchemy.dialects.postgresql import UUID
 from uuid import uuid4
 
 from app.db.base_class import Base

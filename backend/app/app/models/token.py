@@ -1,8 +1,5 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
-# from sqlalchemy.orm import Mapped, mapped_column, relationship
-# from sqlalchemy import ForeignKey
-# from sqlalchemy.dialects.postgresql import UUID
 
 from app.db.base_class import Base
 
