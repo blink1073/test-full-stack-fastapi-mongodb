@@ -25,7 +25,7 @@ class User(Base):
     email_validated: bool = Field(default=False)
     is_active: bool = Field(default=True)
     is_superuser: bool = Field(default=False)
-    refresh_tokens: List["Token"] = Field(default=[])
+    #refresh_tokens: List["Token"] = Field(default=[])
 
     # id: Mapped[UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, index=True, default=uuid4)
     # created: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)

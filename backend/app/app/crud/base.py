@@ -2,7 +2,7 @@ from typing import Any, Dict, Generic, List, Optional, Type, TypeVar, Union
 
 from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel
-from sqlalchemy.orm import Session
+from pymongo.database import Database
 
 from app.db.base_class import Base
 
@@ -18,20 +18,24 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
 
         **Parameters**
 
-        * `model`: A SQLAlchemy model class
+        * `model`: A Pydantic model class
         * `schema`: A Pydantic model (schema) class
         """
         self.model = model
 
-    def get(self, db: Session, id: Any) -> Optional[ModelType]:
-        return db.query(self.model).filter(self.model.id == id).first()
+    def get(self, db: Database, id: Any) -> Optional[ModelType]:
+        col = db[self.model.__name__.lower() + 's']
+        model = col.find_one({'id': id})
+        return self.model(**model)
 
     def get_multi(
-        self, db: Session, *, skip: int = 0, limit: int = 100
+        self, db: Database, *, skip: int = 0, limit: int = 100
     ) -> List[ModelType]:
-        return db.query(self.model).offset(skip).limit(limit).all()
+        col = db[self.model.__name__.lower() + 's']
+        return list(col.find({}, skip=skip, limit=limit))
 
-    def create(self, db: Session, *, obj_in: CreateSchemaType) -> ModelType:
+    def create(self, db: Database, *, obj_in: CreateSchemaType) -> ModelType:
+        import pdb; pdb.set_trace()
         obj_in_data = jsonable_encoder(obj_in)
         db_obj = self.model(**obj_in_data)  # type: ignore
         db.add(db_obj)
@@ -41,7 +45,7 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
 
     def update(
         self,
-        db: Session,
+        db: Database,
         *,
         db_obj: ModelType,
         obj_in: Union[UpdateSchemaType, Dict[str, Any]]
@@ -54,12 +58,12 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         for field in obj_data:
             if field in update_data:
                 setattr(db_obj, field, update_data[field])
-        db.add(db_obj)
-        db.commit()
-        db.refresh(db_obj)
+        col = db[self.model.__name__.lower() + 's']
+        col.insert_one(db_obj.dict())
         return db_obj
 
-    def remove(self, db: Session, *, id: int) -> ModelType:
+    def remove(self, db: Database, *, id: int) -> ModelType:
+        import pdb; pdb.set_trace()
         obj = db.query(self.model).get(id)
         db.delete(obj)
         db.commit()

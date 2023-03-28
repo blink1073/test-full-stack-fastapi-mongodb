@@ -1,9 +1,9 @@
-from typing import Any, Union, Dict
+from typing import Any, Union
 from pydantic import EmailStr
 
 from fastapi import APIRouter, Body, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
-from sqlalchemy.orm import Session
+from pymongo.database import Database
 
 from app import crud, models, schemas
 from app.api import deps
@@ -34,7 +34,7 @@ See `security.py` for other requirements.
 
 
 @router.post("/magic/{email}", response_model=schemas.WebToken)
-def login_with_magic_link(*, db: Session = Depends(deps.get_db), email: EmailStr) -> Any:
+def login_with_magic_link(*, db: Database = Depends(deps.get_db), email: EmailStr) -> Any:
     """
     First step of a 'magic link' login. Check if the user exists and generate a magic link. Generates two short-duration
     jwt tokens, one for validation, one for email. Creates user if not exist.
@@ -56,7 +56,7 @@ def login_with_magic_link(*, db: Session = Depends(deps.get_db), email: EmailStr
 @router.post("/claim", response_model=schemas.Token)
 def validate_magic_link(
     *,
-    db: Session = Depends(deps.get_db),
+    db: Database = Depends(deps.get_db),
     obj_in: schemas.WebToken,
     magic_in: bool = Depends(deps.get_magic_token),
 ) -> Any:
@@ -93,7 +93,7 @@ def validate_magic_link(
 
 
 @router.post("/oauth", response_model=schemas.Token)
-def login_with_oauth2(db: Session = Depends(deps.get_db), form_data: OAuth2PasswordRequestForm = Depends()) -> Any:
+def login_with_oauth2(db: Database = Depends(deps.get_db), form_data: OAuth2PasswordRequestForm = Depends()) -> Any:
     """
     First step with OAuth2 compatible token login, get an access token for future requests.
     """
@@ -118,7 +118,7 @@ def login_with_oauth2(db: Session = Depends(deps.get_db), form_data: OAuth2Passw
 @router.post("/totp", response_model=schemas.Token)
 def login_with_totp(
     *,
-    db: Session = Depends(deps.get_db),
+    db: Database = Depends(deps.get_db),
     totp_data: schemas.WebToken,
     current_user: models.User = Depends(deps.get_totp_user),
 ) -> Any:
@@ -144,7 +144,7 @@ def login_with_totp(
 @router.put("/totp", response_model=schemas.Msg)
 def enable_totp_authentication(
     *,
-    db: Session = Depends(deps.get_db),
+    db: Database = Depends(deps.get_db),
     data_in: schemas.EnableTOTP,
     current_user: models.User = Depends(deps.get_current_active_user),
 ) -> Any:
@@ -170,7 +170,7 @@ def enable_totp_authentication(
 @router.delete("/totp", response_model=schemas.Msg)
 def disable_totp_authentication(
     *,
-    db: Session = Depends(deps.get_db),
+    db: Database = Depends(deps.get_db),
     data_in: schemas.UserUpdate,
     current_user: models.User = Depends(deps.get_current_active_user),
 ) -> Any:
@@ -187,7 +187,7 @@ def disable_totp_authentication(
 
 @router.post("/refresh", response_model=schemas.Token)
 def refresh_token(
-    db: Session = Depends(deps.get_db),
+    db: Database = Depends(deps.get_db),
     current_user: models.User = Depends(deps.get_refresh_user),
 ) -> Any:
     """
@@ -204,7 +204,7 @@ def refresh_token(
 
 @router.post("/revoke", response_model=schemas.Msg)
 def revoke_token(
-    db: Session = Depends(deps.get_db),
+    db: Database = Depends(deps.get_db),
     current_user: models.User = Depends(deps.get_refresh_user),
 ) -> Any:
     """
@@ -214,7 +214,7 @@ def revoke_token(
 
 
 @router.post("/recover/{email}", response_model=Union[schemas.WebToken, schemas.Msg])
-def recover_password(email: str, db: Session = Depends(deps.get_db)) -> Any:
+def recover_password(email: str, db: Database = Depends(deps.get_db)) -> Any:
     """
     Password Recovery
     """
@@ -230,7 +230,7 @@ def recover_password(email: str, db: Session = Depends(deps.get_db)) -> Any:
 @router.post("/reset", response_model=schemas.Msg)
 def reset_password(
     *,
-    db: Session = Depends(deps.get_db),
+    db: Database = Depends(deps.get_db),
     new_password: str = Body(...),
     claim: str = Body(...),
     magic_in: bool = Depends(deps.get_magic_token),
@@ -252,6 +252,5 @@ def reset_password(
     # Update the password
     hashed_password = security.get_password_hash(new_password)
     user.hashed_password = hashed_password
-    db.add(user)
-    db.commit()
+    db.users.insert_one(user)
     return {"msg": "Password updated successfully."}
