@@ -49,7 +49,6 @@ def update_user(
     """
     Update user.
     """
-    import pdb; pdb.set_trace()
     if current_user.hashed_password:
         user = crud.user.authenticate(db, email=current_user.email, password=obj_in.original)
         if not obj_in.original or not user:

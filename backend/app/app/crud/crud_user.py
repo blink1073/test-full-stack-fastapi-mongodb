@@ -27,7 +27,6 @@ class CRUDUser(CRUDBase[User, UserCreate, UserUpdate]):
         return db_obj
 
     def update(self, db: Database, *, db_obj: User, obj_in: Union[UserUpdate, Dict[str, Any]]) -> User:
-        import pdb; pdb.set_trace()
         if isinstance(obj_in, dict):
             update_data = obj_in
         else:

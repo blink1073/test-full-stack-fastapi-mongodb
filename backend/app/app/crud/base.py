@@ -24,14 +24,14 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         self.model = model
 
     def get(self, db: Database, id: Any) -> Optional[ModelType]:
-        col = db[self.model.__name__.lower() + 's']
+        col = db[self.model.column_name()]
         model = col.find_one({'id': id})
         return self.model(**model)
 
     def get_multi(
         self, db: Database, *, skip: int = 0, limit: int = 100
     ) -> List[ModelType]:
-        col = db[self.model.__name__.lower() + 's']
+        col = db[self.model.column_name()]
         return list(col.find({}, skip=skip, limit=limit))
 
     def create(self, db: Database, *, obj_in: CreateSchemaType) -> ModelType:
@@ -58,7 +58,7 @@ class CRUDBase(Generic[ModelType, CreateSchemaType, UpdateSchemaType]):
         for field in obj_data:
             if field in update_data:
                 setattr(db_obj, field, update_data[field])
-        col = db[self.model.__name__.lower() + 's']
+        col = db[self.model.column_name()]
         col.insert_one(db_obj.dict())
         return db_obj
 
